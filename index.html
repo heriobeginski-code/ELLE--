@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Scholarship Grind - Elle's Law School MVP</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .border-6 {
+            border-width: 6px;
+        }
+
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #FFFFFF;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+            cursor: pointer;
+        }
+
+        select option {
+            background-color: #E0218A;
+            color: #FFFFFF;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // Constants
+        const PINK = '#E0218A';
+        const WHITE = '#FFFFFF';
+        const TARGET_FUNDING = 40000;
+
+        const MANTRAS = [
+            "Justice Sotomayor started somewhere—today, it's this application.",
+            "10/60 is the precedent. I'm here to break the record.",
+            "The 80% Rule: If you meet the requirements, let the committee decide—don't self-reject."
+        ];
+
+        const SOURCING_LINKS = {
+            General: [
+                { name: 'Bold.org', url: 'https://bold.org' },
+                { name: 'Scholarships.com', url: 'https://www.scholarships.com' },
+                { name: 'Fastweb', url: 'https://www.fastweb.com' },
+                { name: 'BigFuture', url: 'https://bigfuture.collegeboard.org' },
+                { name: 'GoingMerry', url: 'https://www.goingmerry.com' },
+                { name: 'Niche', url: 'https://www.niche.com/colleges/scholarships/' }
+            ],
+            Homeschool: [
+                { name: 'Scholarships360', url: 'https://scholarships360.org/scholarships/scholarships-for-homeschoolers/' },
+                { name: 'Sonlight', url: 'https://www.sonlight.com/pages/scholarships' },
+                { name: 'Edvisors', url: 'https://www.edvisors.com/plan-for-college/scholarships/college-scholarships/scholarships-for-homeschool-students/' }
+            ],
+            'Hispanic/Latina': [
+                { name: 'HSF', url: 'https://www.hsf.net/scholarship' },
+                { name: 'HACU', url: 'https://hacu.net/programs/hacu-scholarship-program/' },
+                { name: 'Hispanic Heritage', url: 'https://hispanicheritage.org/programs/leadership/youth-awards/' }
+            ],
+            'Law/Women': [
+                { name: 'Future Women in Law', url: 'https://studentscholarships.org/scholarship/31427/future-women-in-law-scholarship' },
+                { name: 'Pearce Law Empowering Women', url: 'https://thepearcelawfirm.com/empowering-scholarship-application/' },
+                { name: 'WLALA', url: 'https://wlala.org/scholarships/' }
+            ],
+            Leadership: [
+                { name: 'NESA Eagle Scout', url: 'https://nesa.org/scholarships/' },
+                { name: 'Scouting America', url: 'https://www.scouting.org/awards/scholarships/' }
+            ]
+        };
+
+        // Simple Icons as SVG components
+        const StarIcon = () => (
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+            </svg>
+        );
+
+        const UserIcon = () => (
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+            </svg>
+        );
+
+        const ClockIcon = () => (
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="10" />
+                <polyline points="12 6 12 12 16 14" />
+            </svg>
+        );
+
+        const FileTextIcon = () => (
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+                <line x1="16" y1="13" x2="8" y2="13" />
+                <line x1="16" y1="17" x2="8" y2="17" />
+                <polyline points="10 9 9 9 8 9" />
+            </svg>
+        );
+
+        const CheckCircleIcon = () => (
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                <polyline points="22 4 12 14.01 9 11.01" />
+            </svg>
+        );
+
+        const BarChart3Icon = () => (
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <line x1="18" y1="20" x2="18" y2="10" />
+                <line x1="12" y1="20" x2="12" y2="4" />
+                <line x1="6" y1="20" x2="6" y2="14" />
+            </svg>
+        );
+
+        const ArchiveIcon = () => (
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <polyline points="21 8 21 21 3 21 3 8" />
+                <rect x="1" y="3" width="22" height="5" />
+                <line x1="10" y1="12" x2="14" y2="12" />
+            </svg>
+        );
+
+        const PlusIcon = () => (
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+        );
+
+        const XIcon = () => (
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+        );
+
+        const ExternalLinkIcon = () => (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                <polyline points="15 3 21 3 21 9" />
+                <line x1="10" y1="14" x2="21" y2="3" />
+            </svg>
+        );
+
+        const UploadIcon = () => (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="17 8 12 3 7 8" />
+                <line x1="12" y1="3" x2="12" y2="15" />
+            </svg>
+        );
+
+        function App() {
+            const [headerExpanded, setHeaderExpanded] = useState(false);
+            const [dailyProgress, setDailyProgress] = useState({ clock: false, file: false, check: false });
+            const [mantra] = useState(MANTRAS[Math.floor(Math.random() * MANTRAS.length)]);
+            const [scholarships, setScholarships] = useState([]);
+            const [assets, setAssets] = useState({});
+            const [activeModal, setActiveModal] = useState(null);
+
+            useEffect(() => {
+                const savedScholarships = localStorage.getItem('scholarships');
+                const savedAssets = localStorage.getItem('assets');
+                const savedProgress = localStorage.getItem('dailyProgress');
+
+                if (savedScholarships) setScholarships(JSON.parse(savedScholarships));
+                if (savedAssets) setAssets(JSON.parse(savedAssets));
+                if (savedProgress) setDailyProgress(JSON.parse(savedProgress));
+            }, []);
+
+            useEffect(() => {
+                localStorage.setItem('scholarships', JSON.stringify(scholarships));
+            }, [scholarships]);
+
+            useEffect(() => {
+                localStorage.setItem('assets', JSON.stringify(assets));
+            }, [assets]);
+
+            useEffect(() => {
+                localStorage.setItem('dailyProgress', JSON.stringify(dailyProgress));
+            }, [dailyProgress]);
+
+            const totalFunding = scholarships
+                .filter(s => s.status === 'Won')
+                .reduce((sum, s) => sum + (parseFloat(s.amount) || 0), 0);
+
+            const fundingPercentage = Math.min((totalFunding / TARGET_FUNDING) * 100, 100);
+
+            const addScholarship = () => {
+                const newScholarship = {
+                    id: Date.now(),
+                    name: '',
+                    deadline: '',
+                    amount: '',
+                    probability: 'Low',
+                    eightyRule: false,
+                    status: 'Not Started'
+                };
+                setScholarships([...scholarships, newScholarship]);
+            };
+
+            const updateScholarship = (id, field, value) => {
+                setScholarships(scholarships.map(s => 
+                    s.id === id ? { ...s, [field]: value } : s
+                ));
+            };
+
+            const deleteScholarship = (id) => {
+                setScholarships(scholarships.filter(s => s.id !== id));
+            };
+
+            const handleFileUpload = (categoryId, files) => {
+                const fileList = assets[categoryId] || [];
+                const newFiles = Array.from(files).map(f => f.name);
+                setAssets({ ...assets, [categoryId]: [...fileList, ...newFiles] });
+            };
+
+            const removeFile = (categoryId, fileName) => {
+                setAssets({
+                    ...assets,
+                    [categoryId]: (assets[categoryId] || []).filter(f => f !== fileName)
+                });
+            };
+
+            return (
+                <div style={{ backgroundColor: PINK }} className="min-h-screen p-6 md:p-8 lg:p-12">
+                    <div className="max-w-7xl mx-auto space-y-6">
+                        {/* Header */}
+                        <div className="flex items-center justify-between mb-8">
+                            <div className="flex items-center gap-3">
+                                <div style={{ backgroundColor: WHITE }} className="w-12 h-12 rounded-full flex items-center justify-center">
+                                    <div style={{ color: PINK }}>
+                                        <StarIcon />
+                                    </div>
+                                </div>
+                                <h1 style={{ color: WHITE }} className="text-2xl md:text-3xl font-bold tracking-wide">
+                                    SCHOLARSHIP GRIND
+                                </h1>
+                            </div>
+                            <button 
+                                style={{ 
+                                    backgroundColor: PINK,
+                                    borderColor: WHITE,
+                                    color: WHITE 
+                                }}
+                                className="border-4 rounded-full px-6 py-2 font-bold flex items-center gap-2 hover:opacity-90 transition"
+                            >
+                                <UserIcon />
+                                ELLE_MODE
+                            </button>
+                        </div>
+
+                        {/* Main Header Card */}
+                        <div 
+                            style={{ 
+                                backgroundColor: PINK,
+                                borderColor: WHITE,
+                                color: WHITE 
+                            }}
+                            className="border-6 rounded-[40px] p-8 md:p-12 cursor-pointer hover:opacity-95 transition"
+                            onClick={() => setHeaderExpanded(!headerExpanded)}
+                        >
+                            <h2 className="text-5xl md:text-7xl font-bold text-center tracking-tight">
+                                HELLO, ELLE.
+                            </h2>
+
+                            {headerExpanded && (
+                                <div className="mt-8 space-y-6">
+                                    <div>
+                                        <div className="flex justify-between items-center mb-3">
+                                            <span className="text-lg font-bold">DAILY SESSION</span>
+                                            <span className="text-lg font-bold">
+                                                {Object.values(dailyProgress).filter(Boolean).length}/3
+                                            </span>
+                                        </div>
+                                        <div style={{ backgroundColor: 'rgba(255,255,255,0.3)' }} className="h-4 rounded-full overflow-hidden">
+                                            <div 
+                                                style={{ 
+                                                    backgroundColor: WHITE,
+                                                    width: `${(Object.values(dailyProgress).filter(Boolean).length / 3) * 100}%`
+                                                }}
+                                                className="h-full transition-all duration-300"
+                                            />
+                                        </div>
+                                        <div className="flex justify-between mt-4">
+                                            {[
+                                                { key: 'clock', icon: ClockIcon, label: 'TIME' },
+                                                { key: 'file', icon: FileTextIcon, label: 'DOCS' },
+                                                { key: 'check', icon: CheckCircleIcon, label: 'DONE' }
+                                            ].map(({ key, icon: Icon, label }) => (
+                                                <button
+                                                    key={key}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setDailyProgress({ ...dailyProgress, [key]: !dailyProgress[key] });
+                                                    }}
+                                                    style={{
+                                                        backgroundColor: dailyProgress[key] ? WHITE : 'rgba(255,255,255,0.2)',
+                                                        color: dailyProgress[key] ? PINK : WHITE
+                                                    }}
+                                                    className="w-20 h-20 rounded-full flex flex-col items-center justify-center gap-1 hover:scale-105 transition"
+                                                >
+                                                    <Icon />
+                                                    <span className="text-xs font-bold">{label}</span>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-6">
+                                        <div className="flex justify-between items-center mb-3">
+                                            <span className="text-lg font-bold">FUNDING PROGRESS</span>
+                                            <span className="text-lg font-bold">
+                                                ${totalFunding.toLocaleString()} / ${TARGET_FUNDING.toLocaleString()}
+                                            </span>
+                                        </div>
+                                        <div style={{ backgroundColor: 'rgba(255,255,255,0.3)' }} className="h-4 rounded-full overflow-hidden">
+                                            <div 
+                                                style={{ 
+                                                    backgroundColor: WHITE,
+                                                    width: `${fundingPercentage}%`
+                                                }}
+                                                className="h-full transition-all duration-300"
+                                            />
+                                        </div>
+                                        <p className="text-sm mt-2 opacity-90">{Math.round(fundingPercentage)}% of your target reached</p>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Three Main Cards */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            {/* Sourcing Hub */}
+                            <div
+                                style={{ 
+                                    backgroundColor: PINK,
+                                    borderColor: WHITE,
+                                    color: WHITE 
+                                }}
+                                className="border-6 rounded-[40px] p-8 flex flex-col items-center justify-between hover:opacity-95 transition cursor-pointer min-h-[400px]"
+                                onClick={() => setActiveModal('sourcing')}
+                            >
+                                <div className="flex-1 flex flex-col items-center justify-center">
+                                    <div className="mb-4">
+                                        <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
+                                            <path d="M40 10 L55 25 L50 25 L50 40 L60 40 L60 45 L40 60 L20 45 L20 40 L30 40 L30 25 L25 25 Z" 
+                                                fill={WHITE} stroke={WHITE} strokeWidth="2"/>
+                                        </svg>
+                                    </div>
+                                    <h3 className="text-2xl font-bold mb-2">SOURCING HUB</h3>
+                                    <p className="text-sm opacity-90">FIND NEW OPPORTUNITIES</p>
+                                </div>
+                                <button 
+                                    style={{ 
+                                        backgroundColor: PINK,
+                                        borderColor: WHITE,
+                                        color: WHITE 
+                                    }}
+                                    className="border-4 rounded-full px-12 py-3 font-bold text-lg w-full hover:bg-white hover:text-pink-600 transition mt-6"
+                                >
+                                    LAUNCH
+                                </button>
+                            </div>
+
+                            {/* Master Tracker */}
+                            <div
+                                style={{ 
+                                    backgroundColor: PINK,
+                                    borderColor: WHITE,
+                                    color: WHITE 
+                                }}
+                                className="border-6 rounded-[40px] p-8 flex flex-col items-center justify-between hover:opacity-95 transition cursor-pointer min-h-[400px]"
+                                onClick={() => setActiveModal('tracker')}
+                            >
+                                <div className="flex-1 flex flex-col items-center justify-center">
+                                    <div className="mb-4 scale-[3.5]">
+                                        <BarChart3Icon />
+                                    </div>
+                                    <h3 className="text-2xl font-bold mb-2 mt-8">MASTER TRACKER</h3>
+                                    <p className="text-sm opacity-90">MONITOR APPLICATIONS</p>
+                                </div>
+                                <button 
+                                    style={{ 
+                                        backgroundColor: PINK,
+                                        borderColor: WHITE,
+                                        color: WHITE 
+                                    }}
+                                    className="border-4 rounded-full px-12 py-3 font-bold text-lg w-full hover:bg-white hover:text-pink-600 transition mt-6"
+                                >
+                                    LAUNCH
+                                </button>
+                            </div>
+
+                            {/* Asset Vault */}
+                            <div
+                                style={{ 
+                                    backgroundColor: PINK,
+                                    borderColor: WHITE,
+                                    color: WHITE 
+                                }}
+                                className="border-6 rounded-[40px] p-8 flex flex-col items-center justify-between hover:opacity-95 transition cursor-pointer min-h-[400px]"
+                                onClick={() => setActiveModal('vault')}
+                            >
+                                <div className="flex-1 flex flex-col items-center justify-center">
+                                    <div className="mb-4 scale-[3.5]">
+                                        <ArchiveIcon />
+                                    </div>
+                                    <h3 className="text-2xl font-bold mb-2 mt-8">ASSET VAULT</h3>
+                                    <p className="text-sm opacity-90">MANAGE DOCUMENTS</p>
+                                </div>
+                                <button 
+                                    style={{ 
+                                        backgroundColor: PINK,
+                                        borderColor: WHITE,
+                                        color: WHITE 
+                                    }}
+                                    className="border-4 rounded-full px-12 py-3 font-bold text-lg w-full hover:bg-white hover:text-pink-600 transition mt-6"
+                                >
+                                    LAUNCH
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Mindset Bar */}
+                        <div
+                            style={{ 
+                                backgroundColor: PINK,
+                                borderColor: WHITE,
+                                color: WHITE 
+                            }}
+                            className="border-6 rounded-[40px] p-6 text-center"
+                        >
+                            <p className="text-lg font-bold leading-relaxed">{mantra}</p>
+                        </div>
+                    </div>
+
+                    {/* Sourcing Hub Modal */}
+                    {activeModal === 'sourcing' && (
+                        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" onClick={() => setActiveModal(null)}>
+                            <div
+                                style={{ 
+                                    backgroundColor: PINK,
+                                    borderColor: WHITE,
+                                    color: WHITE 
+                                }}
+                                className="border-6 rounded-[40px] p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+                                onClick={e => e.stopPropagation()}
+                            >
+                                <div className="flex justify-between items-center mb-8">
+                                    <h2 className="text-4xl font-bold italic">SOURCING HUB</h2>
+                                    <button onClick={() => setActiveModal(null)} className="hover:opacity-70">
+                                        <div className="scale-125"><XIcon /></div>
+                                    </button>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    {Object.entries(SOURCING_LINKS).map(([category, links]) => (
+                                        <div key={category}>
+                                            <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                                                <span className="text-2xl">⚡</span> {category.toUpperCase()}
+                                            </h3>
+                                            <div className="space-y-3">
+                                                {links.map(link => (
+                                                    <a
+                                                        key={link.name}
+                                                        href={link.url}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        style={{ 
+                                                            backgroundColor: WHITE,
+                                                            color: PINK 
+                                                        }}
+                                                        className="block px-6 py-3 rounded-full font-bold hover:opacity-90 transition flex items-center justify-between"
+                                                    >
+                                                        <span>{link.name}</span>
+                                                        <ExternalLinkIcon />
+                                                    </a>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <button
+                                    onClick={() => setActiveModal(null)}
+                                    style={{ 
+                                        backgroundColor: PINK,
+                                        borderColor: WHITE,
+                                        color: WHITE 
+                                    }}
+                                    className="border-4 rounded-full px-16 py-4 font-bold text-xl mx-auto block mt-8 hover:bg-white hover:text-pink-600 transition"
+                                >
+                                    CLOSE
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Master Tracker Modal */}
+                    {activeModal === 'tracker' && (
+                        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" onClick={() => setActiveModal(null)}>
+                            <div
+                                style={{ 
+                                    backgroundColor: PINK,
+                                    borderColor: WHITE,
+                                    color: WHITE 
+                                }}
+                                className="border-6 rounded-[40px] p-8 max-w-6xl w-full max-h-[90vh] overflow-y-auto"
+                                onClick={e => e.stopPropagation()}
+                            >
+                                <div className="flex justify-between items-center mb-6">
+                                    <div>
+                                        <h2 className="text-3xl font-bold flex items-center gap-3">
+                                            <ArchiveIcon /> Scholarship Details
+                                        </h2>
+                                        <p className="text-sm mt-1 opacity-90">Managing entries for your applications</p>
+                                    </div>
+                                    <button onClick={() => setActiveModal(null)} className="hover:opacity-70">
+                                        <div className="scale-125"><XIcon /></div>
+                                    </button>
+                                </div>
+
+                                <div className="overflow-x-auto">
+                                    <table className="w-full">
+                                        <thead>
+                                            <tr style={{ backgroundColor: 'rgba(255,255,255,0.2)' }}>
+                                                <th className="px-4 py-3 text-left font-bold">SCHOLARSHIP NAME</th>
+                                                <th className="px-4 py-3 text-left font-bold">DEADLINE</th>
+                                                <th className="px-4 py-3 text-left font-bold">AMOUNT</th>
+                                                <th className="px-4 py-3 text-center font-bold">80% RULE</th>
+                                                <th className="px-4 py-3 text-left font-bold">STATUS</th>
+                                                <th className="px-4 py-3 text-center font-bold">ACTION</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {scholarships.map((scholarship, idx) => (
+                                                <tr key={scholarship.id} style={{ backgroundColor: idx % 2 === 0 ? 'rgba(255,255,255,0.1)' : 'transparent' }}>
+                                                    <td className="px-4 py-3">
+                                                        <input
+                                                            type="text"
+                                                            value={scholarship.name}
+                                                            onChange={(e) => updateScholarship(scholarship.id, 'name', e.target.value)}
+                                                            placeholder="Enter name..."
+                                                            style={{ 
+                                                                backgroundColor: 'rgba(255,255,255,0.2)',
+                                                                color: WHITE,
+                                                                borderColor: WHITE
+                                                            }}
+                                                            className="border-2 rounded-lg px-3 py-2 w-full font-bold placeholder-white placeholder-opacity-50"
+                                                        />
+                                                    </td>
+                                                    <td className="px-4 py-3">
+                                                        <input
+                                                            type="date"
+                                                            value={scholarship.deadline}
+                                                            onChange={(e) => updateScholarship(scholarship.id, 'deadline', e.target.value)}
+                                                            style={{ 
+                                                                backgroundColor: 'rgba(255,255,255,0.2)',
+                                                                color: WHITE,
+                                                                borderColor: WHITE
+                                                            }}
+                                                            className="border-2 rounded-lg px-3 py-2 w-full font-bold"
+                                                        />
+                                                    </td>
+                                                    <td className="px-4 py-3">
+                                                        <input
+                                                            type="number"
+                                                            value={scholarship.amount}
+                                                            onChange={(e) => updateScholarship(scholarship.id, 'amount', e.target.value)}
+                                                            placeholder="$"
+                                                            style={{ 
+                                                                backgroundColor: 'rgba(255,255,255,0.2)',
+                                                                color: WHITE,
+                                                                borderColor: WHITE
+                                                            }}
+                                                            className="border-2 rounded-lg px-3 py-2 w-full font-bold"
+                                                        />
+                                                    </td>
+                                                    <td className="px-4 py-3 text-center">
+                                                        <button
+                                                            onClick={() => updateScholarship(scholarship.id, 'eightyRule', !scholarship.eightyRule)}
+                                                            style={{
+                                                                backgroundColor: scholarship.eightyRule ? WHITE : 'transparent',
+                                                                borderColor: WHITE,
+                                                                color: scholarship.eightyRule ? PINK : WHITE
+                                                            }}
+                                                            className="w-10 h-10 rounded-full border-2 flex items-center justify-center mx-auto hover:scale-110 transition"
+                                                        >
+                                                            {scholarship.eightyRule && <CheckCircleIcon />}
+                                                        </button>
+                                                    </td>
+                                                    <td className="px-4 py-3">
+                                                        <select
+                                                            value={scholarship.status}
+                                                            onChange={(e) => updateScholarship(scholarship.id, 'status', e.target.value)}
+                                                            style={{ 
+                                                                backgroundColor: scholarship.status === 'Won' ? WHITE : 
+                                                                               scholarship.status === 'Submitted' ? 'rgba(255,255,255,0.4)' :
+                                                                               scholarship.status === 'In Progress' ? 'rgba(255,255,255,0.3)' :
+                                                                               'rgba(255,255,255,0.2)',
+                                                                color: scholarship.status === 'Won' ? PINK : WHITE,
+                                                                borderColor: WHITE
+                                                            }}
+                                                            className="border-2 rounded-full px-4 py-2 w-full font-bold"
+                                                        >
+                                                            <option value="Not Started">Not Started</option>
+                                                            <option value="In Progress">In Progress</option>
+                                                            <option value="Submitted">Submitted</option>
+                                                            <option value="Won">Won</option>
+                                                            <option value="Lost">Lost</option>
+                                                        </select>
+                                                    </td>
+                                                    <td className="px-4 py-3 text-center">
+                                                        <button
+                                                            onClick={() => deleteScholarship(scholarship.id)}
+                                                            className="hover:opacity-70 transition"
+                                                        >
+                                                            <XIcon />
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <div className="flex gap-4 mt-6">
+                                    <button
+                                        onClick={addScholarship}
+                                        style={{ 
+                                            backgroundColor: WHITE,
+                                            color: PINK 
+                                        }}
+                                        className="px-8 py-3 rounded-full font-bold flex items-center gap-2 hover:opacity-90 transition"
+                                    >
+                                        <PlusIcon /> ADD SCHOLARSHIP
+                                    </button>
+                                    <button
+                                        onClick={() => setActiveModal(null)}
+                                        style={{ 
+                                            backgroundColor: PINK,
+                                            borderColor: WHITE,
+                                            color: WHITE 
+                                        }}
+                                        className="border-4 rounded-full px-16 py-3 font-bold hover:bg-white hover:text-pink-600 transition"
+                                    >
+                                        CLOSE
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Asset Vault Modal */}
+                    {activeModal === 'vault' && (
+                        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" onClick={() => setActiveModal(null)}>
+                            <div
+                                style={{ 
+                                    backgroundColor: PINK,
+                                    borderColor: WHITE,
+                                    color: WHITE 
+                                }}
+                                className="border-6 rounded-[40px] p-8 max-w-5xl w-full max-h-[90vh] overflow-y-auto"
+                                onClick={e => e.stopPropagation()}
+                            >
+                                <div className="flex justify-between items-center mb-6">
+                                    <div>
+                                        <h2 className="text-4xl font-bold">ASSET VAULT</h2>
+                                        <p className="text-sm mt-1 opacity-90">Manage your core scholarship documents</p>
+                                    </div>
+                                    <button onClick={() => setActiveModal(null)} className="hover:opacity-70">
+                                        <div className="scale-125"><XIcon /></div>
+                                    </button>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    {[
+                                        { id: 'core-five', label: 'THE CORE FIVE', subtitle: 'IDENTITY • NEED • GOALS\nLEADERSHIP • ACADEMIC', icon: PlusIcon },
+                                        { id: 'transcripts', label: 'TRANSCRIPTS', subtitle: 'FAFSA PDFS &\nACADEMIC RECORDS', icon: FileTextIcon },
+                                        { id: 'letters', label: 'LETTERS OF REC', subtitle: 'PROFESSIONAL &\nACADEMIC ENDORSEMENTS', icon: CheckCircleIcon },
+                                        { id: 'brag-sheet', label: 'THE BRAG SHEET', subtitle: 'PERSONAL ACHIEVEMENT\nLIST & AWARDS', icon: StarIcon }
+                                    ].map(category => {
+                                        const Icon = category.icon;
+                                        const files = assets[category.id] || [];
+                                        
+                                        return (
+                                            <div
+                                                key={category.id}
+                                                style={{ borderColor: WHITE }}
+                                                className="border-4 border-dashed rounded-[40px] p-6 hover:bg-white hover:bg-opacity-10 transition"
+                                            >
+                                                <div className="flex flex-col items-center text-center mb-4">
+                                                    <div style={{ backgroundColor: WHITE }} className="w-16 h-16 rounded-full flex items-center justify-center mb-3">
+                                                        <div style={{ color: PINK }} className="scale-125">
+                                                            <Icon />
+                                                        </div>
+                                                    </div>
+                                                    <h3 className="text-xl font-bold">{category.label}</h3>
+                                                    <p className="text-sm mt-1 opacity-90 whitespace-pre-line">{category.subtitle}</p>
+                                                </div>
+
+                                                {files.length > 0 && (
+                                                    <div className="mb-4 space-y-2">
+                                                        {files.map((file, idx) => (
+                                                            <div
+                                                                key={idx}
+                                                                style={{ backgroundColor: 'rgba(255,255,255,0.2)' }}
+                                                                className="px-4 py-2 rounded-full flex items-center justify-between"
+                                                            >
+                                                                <span className="text-sm font-bold truncate">{file}</span>
+                                                                <button
+                                                                    onClick={() => removeFile(category.id, file)}
+                                                                    className="hover:opacity-70 ml-2"
+                                                                >
+                                                                    <div className="scale-75"><XIcon /></div>
+                                                                </button>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+
+                                                <label
+                                                    style={{ 
+                                                        backgroundColor: WHITE,
+                                                        color: PINK 
+                                                    }}
+                                                    className="block px-6 py-3 rounded-full font-bold text-center cursor-pointer hover:opacity-90 transition"
+                                                >
+                                                    <input
+                                                        type="file"
+                                                        multiple
+                                                        onChange={(e) => handleFileUpload(category.id, e.target.files)}
+                                                        className="hidden"
+                                                    />
+                                                    <span className="inline-flex items-center gap-2">
+                                                        <UploadIcon />
+                                                        UPLOAD
+                                                    </span>
+                                                </label>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+
+                                <button
+                                    onClick={() => setActiveModal(null)}
+                                    style={{ 
+                                        backgroundColor: PINK,
+                                        borderColor: WHITE,
+                                        color: WHITE 
+                                    }}
+                                    className="border-4 rounded-full px-16 py-4 font-bold text-xl mx-auto block mt-8 hover:bg-white hover:text-pink-600 transition"
+                                >
+                                    CLOSE
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
